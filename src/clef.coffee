@@ -29,14 +29,14 @@ class ClefAPI
     sendRequest: (opts, callback) -> 
         requestOptions = {}
         requestOptions.url = opts.url
-        requestOptions.method = opts.method
-        if requestOptions.method is 'GET'
+        method = opts.method.toLowerCase()
+        if method is 'get'
             requestOptions.qs = opts.params
-        else if requestOptions.method is 'POST'
+        else if method is 'post'
             requestOptions.form = opts.params
-        request requestOptions, (err, response, body) -> 
+        request[method] requestOptions, (err, response, body) -> 
             jsonBody = JSON.parse(body ? null)
-            message = jsonBody.error ? err?.message
+            message = jsonBody?.error ? err?.message
             switch response.statusCode
                 when 500 then callback(new errors.ServerError(message))
                 when 404 then callback(new errors.NotFoundError(message))
