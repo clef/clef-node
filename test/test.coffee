@@ -8,10 +8,11 @@ chai.use sinonChai
 Clef = require '../lib/clef'
 request = require 'request'
 
-TEST_APP_ID = '4f4baa300eae6a7532cc60d06b49e0b9'
-TEST_APP_SECRET = 'd0d0ba5ef23dc134305125627c45677c'
+TEST_APP_ID = 'da242b09262a021a8dbbee5b6346f750'
+TEST_APP_SECRET = '5e18dbf4e817f0608a56b470537b22c2'
 TEST_CODE = 'code_1234567890'
 TEST_TOKEN = 'token_1234567890'
+TEST_LOGOUT_TOKEN = '48ea8cc26d65ad7e1fbdd9acf6584786'
 
 describe 'Clef API', ->
     @timeout(15000);
@@ -157,4 +158,17 @@ describe 'Clef API', ->
             clef.sendRequest url: 'a url', method: 'GET', (err, body) ->
                 expect(err).to.exist
                 expect(err.type).to.equal('APIError')
+                done()
+
+    describe '#getLogoutInformation', -> 
+        clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
+        it 'should return a clef id', (done) -> 
+            clef.getLogoutInformation logoutToken: TEST_LOGOUT_TOKEN, (err, clefID) -> 
+                expect(clefID).to.exist
+                done()
+
+        it 'throws an error with an invalid logout_token', (done) -> 
+            clef.getLogoutInformation logoutToken: 'wrong', (err, info) -> 
+                expect(err).to.exist
+                expect(err.type).to.be.equal('InvalidLogoutTokenError')
                 done()
