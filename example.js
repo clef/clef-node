@@ -23,7 +23,7 @@ clef.getLoginInformation({code: 'code_123456789'}, function(err, info) {
                 console.log(err);
         } 
     } else {
-        clefID = info['clef_id']
+        var clefID = info['clef_id']
     }
 });
 
