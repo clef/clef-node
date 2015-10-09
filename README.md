@@ -40,7 +40,7 @@ clef.getLoginInformation({code: code}, function(err, userInformation) {
     if (err) {
         // Handle the error
     } else {
-        var clefID = userInformation['clef_id'];
+        var clefID = userInformation['id'];
     }
 });
 ```
