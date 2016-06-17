@@ -1,7 +1,7 @@
 request = require 'request'
 errors = require './errors'
 
-MESSAGE_TO_ERROR_MAP = 
+MESSAGE_TO_ERROR_MAP =
     'Invalid App ID.': errors.InvalidAppIDError,
     'Invalid App Secret.': errors.InvalidAppSecretError,
     'Invalid App.': errors.InvalidAppError,
@@ -11,7 +11,7 @@ MESSAGE_TO_ERROR_MAP =
     'Invalid Logout Token.': errors.InvalidLogoutTokenError
 
 class ClefAPI
-    constructor: (opts) -> 
+    constructor: (opts) ->
         @root = opts['root'] ? 'https://clef.io/api'
         @version = 'v1'
 
@@ -23,10 +23,10 @@ class ClefAPI
         @infoURL = "#{@apiBase}/info"
         @logoutURL = "#{@apiBase}/logout"
 
-    @initialize = (opts) -> 
+    @initialize = (opts) ->
         return new ClefAPI(opts)
 
-    sendRequest: (opts, callback) -> 
+    sendRequest: (opts, callback) ->
         requestOptions = {}
         requestOptions.url = opts.url
         method = opts.method.toLowerCase()
@@ -34,8 +34,11 @@ class ClefAPI
             requestOptions.qs = opts.params
         else if method is 'post'
             requestOptions.form = opts.params
-        request[method] requestOptions, (err, response, body) -> 
-            jsonBody = JSON.parse(body ? null)
+        request[method] requestOptions, (err, response, body) ->
+            try
+                jsonBody = JSON.parse(body ? null)
+            catch err
+                return callback(new errors.ParseError(err.message))
             message = jsonBody?.error ? err?.message
             switch response.statusCode
                 when 500 then callback(new errors.ServerError(message))
@@ -47,15 +50,15 @@ class ClefAPI
                 else callback(new errors.APIError(message ? 'Unknown error'))
 
 
-    _getAccessToken: (code, callback) -> 
-        params = 
+    _getAccessToken: (code, callback) ->
+        params =
             code: code
             app_id: @appID
             app_secret: @appSecret
         @sendRequest(url: @authorizeURL, method: 'POST', params: params, (err, json) =>
             if err?
                 callback(err)
-            else 
+            else
                 callback(null, json['access_token'])
         )
 
@@ -67,15 +70,15 @@ class ClefAPI
                 callback(null, json['info'])
         )
 
-    getLoginInformation: (opts, callback) -> 
+    getLoginInformation: (opts, callback) ->
         @_getAccessToken opts.code, (err, accessToken) =>
             return callback(err) if err?
-            @_getUserInfo accessToken, (err, userInfo) => 
-                return callback(err) if err? 
+            @_getUserInfo accessToken, (err, userInfo) =>
+                return callback(err) if err?
                 callback(null, userInfo)
 
     getLogoutInformation: (opts, callback) ->
-        params = 
+        params =
             logout_token: opts.logoutToken
             app_id: @appID
             app_secret: @appSecret

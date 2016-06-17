@@ -1,11 +1,11 @@
 assert = require 'assert'
 chai = require 'chai'
-sinon = require 'sinon' 
+sinon = require 'sinon'
 sinonChai = require "sinon-chai"
 expect = chai.expect
-chai.use sinonChai 
+chai.use sinonChai
 
-Clef = require '../lib/clef'
+Clef = require '../src/clef'
 request = require 'request'
 
 TEST_APP_ID = 'da242b09262a021a8dbbee5b6346f750'
@@ -16,8 +16,8 @@ TEST_LOGOUT_TOKEN = '48ea8cc26d65ad7e1fbdd9acf6584786'
 
 describe 'Clef API', ->
     @timeout(15000);
-    describe '#initialize', -> 
-        it 'creates a ClefAPI object with the proper parameters', -> 
+    describe '#initialize', ->
+        it 'creates a ClefAPI object with the proper parameters', ->
             clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
             assert.equal(clef.appID, TEST_APP_ID)
             assert.equal(clef.appSecret, TEST_APP_SECRET)
@@ -26,43 +26,43 @@ describe 'Clef API', ->
             assert.equal(clef.infoURL, 'https://clef.io/api/v1/info')
             assert.equal(clef.logoutURL, 'https://clef.io/api/v1/logout')
 
-        it 'sets root when passing in a root parameter', -> 
-            clef = Clef.initialize({ 
-                appID: TEST_APP_ID, 
-                appSecret: TEST_APP_SECRET, 
-                root: 'https://turnip.com' 
+        it 'sets root when passing in a root parameter', ->
+            clef = Clef.initialize({
+                appID: TEST_APP_ID,
+                appSecret: TEST_APP_SECRET,
+                root: 'https://turnip.com'
             })
             assert.equal(clef.apiBase, 'https://turnip.com/v1')
             assert.equal(clef.authorizeURL, 'https://turnip.com/v1/authorize')
             assert.equal(clef.infoURL, 'https://turnip.com/v1/info')
             assert.equal(clef.logoutURL, 'https://turnip.com/v1/logout')
 
-    describe '#getLoginInformation', -> 
+    describe '#getLoginInformation', ->
         clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
-        it 'should return user info', (done) -> 
-            clef.getLoginInformation code: TEST_CODE, (err, info) -> 
+        it 'should return user info', (done) ->
+            clef.getLoginInformation code: TEST_CODE, (err, info) ->
                 expect(info).to.have.property('email', 'alex@getclef.com')
                 done()
 
-        it 'gets an access token', (done) -> 
+        it 'gets an access token', (done) ->
             getAccessToken = sinon.spy(clef, '_getAccessToken')
-            clef.getLoginInformation code: TEST_CODE, (err, info) -> 
+            clef.getLoginInformation code: TEST_CODE, (err, info) ->
                 expect(getAccessToken).to.have.been.calledWith(TEST_CODE)
                 done()
 
-        it 'gets user info', (done) -> 
+        it 'gets user info', (done) ->
             getUserInfo = sinon.spy(clef, '_getUserInfo')
-            clef.getLoginInformation code: TEST_CODE, (err, info) -> 
+            clef.getLoginInformation code: TEST_CODE, (err, info) ->
                 expect(getUserInfo).to.have.been.calledWith(TEST_TOKEN)
                 done()
 
-    describe '#_getAccessToken', -> 
+    describe '#_getAccessToken', ->
         clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
-        it 'makes a request to the API server', (done) -> 
+        it 'makes a request to the API server', (done) ->
             sendRequest = sinon.spy(clef, 'sendRequest')
-            clef._getAccessToken TEST_CODE, (err, token) -> 
+            clef._getAccessToken TEST_CODE, (err, token) ->
                 expect(sendRequest).to.have.been.calledWith({
-                    url: clef.authorizeURL, 
+                    url: clef.authorizeURL,
                     method: 'POST',
                     params: {
                         'code': TEST_CODE,
@@ -73,18 +73,18 @@ describe 'Clef API', ->
                 done()
 
         it 'errors when the code is invalid', (done) ->
-            clef._getAccessToken 'invalid code', (err, token) -> 
+            clef._getAccessToken 'invalid code', (err, token) ->
                 expect(err).to.exist
                 expect(err.type).to.equal('InvalidOAuthCodeError')
                 done()
 
-    describe '#_getUserInfo', -> 
+    describe '#_getUserInfo', ->
         clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
         it 'makes a request to the API server', (done) ->
             sendRequest = sinon.spy(clef, 'sendRequest')
-            clef._getUserInfo TEST_TOKEN, (err, token) -> 
+            clef._getUserInfo TEST_TOKEN, (err, token) ->
                 expect(sendRequest).to.have.been.calledWith({
-                    url: clef.infoURL, 
+                    url: clef.infoURL,
                     method: 'GET',
                     params: {
                         'access_token': TEST_TOKEN,
@@ -93,20 +93,20 @@ describe 'Clef API', ->
                 done()
 
         it 'errors when the token is invalid', (done) ->
-            clef._getUserInfo 'invalid token', (err, token) -> 
+            clef._getUserInfo 'invalid token', (err, token) ->
                 expect(err).to.exist
                 expect(err.type).to.equal('InvalidOAuthTokenError')
                 done()
 
-    describe '#sendRequest', -> 
+    describe '#sendRequest', ->
         clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
         requestStub = null
-        before -> 
+        before ->
             requestStub = sinon.stub(request, 'get')
-        after -> 
+        after ->
             requestStub.restore()
 
-        it 'returns a ServerError for 500s', (done) -> 
+        it 'returns a ServerError for 500s', (done) ->
             response = statusCode: 500
             requestStub.callsArgWith(1, message: 'hey', response, '{}')
 
@@ -160,15 +160,25 @@ describe 'Clef API', ->
                 expect(err.type).to.equal('APIError')
                 done()
 
-    describe '#getLogoutInformation', -> 
+        # This can happen if the whole Clef server is down
+        it 'doesn\'t crash on unparseable response', (done) ->
+            response = statusCode: 200
+            requestStub.callsArgWith(1, null, response, '<!DOCTYPE html>')
+
+            clef.sendRequest url: 'a url', method: 'GET', (err, body) ->
+                expect(err).to.exist
+                expect(err.type).to.equal('ParseError')
+                done()
+
+    describe '#getLogoutInformation', ->
         clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
-        it 'should return a clef id', (done) -> 
-            clef.getLogoutInformation logoutToken: TEST_LOGOUT_TOKEN, (err, clefID) -> 
+        it 'should return a clef id', (done) ->
+            clef.getLogoutInformation logoutToken: TEST_LOGOUT_TOKEN, (err, clefID) ->
                 expect(clefID).to.exist
                 done()
 
-        it 'throws an error with an invalid logout_token', (done) -> 
-            clef.getLogoutInformation logoutToken: 'wrong', (err, info) -> 
+        it 'throws an error with an invalid logout_token', (done) ->
+            clef.getLogoutInformation logoutToken: 'wrong', (err, info) ->
                 expect(err).to.exist
                 expect(err.type).to.be.equal('InvalidLogoutTokenError')
                 done()

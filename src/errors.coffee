@@ -25,8 +25,10 @@ class ConnectionError extends APIError
     type: 'ConnectionError'
 class NotFoundError extends APIError
     type: 'NotFoundError'
+class ParseError extends APIError
+    type: 'ParseError'
 
-module.exports = 
+module.exports =
     APIError: APIError
     InvalidAppIDError: InvalidAppIDError
     InvalidAppSecretError: InvalidAppSecretError
@@ -38,3 +40,4 @@ module.exports =
     ServerError: ServerError
     ConnectionError: ConnectionError
     NotFoundError: NotFoundError
+    ParseError: ParseError
