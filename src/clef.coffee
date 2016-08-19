@@ -37,17 +37,20 @@ class ClefAPI
         request[method] requestOptions, (err, response, body) ->
             try
                 jsonBody = JSON.parse(body ? null)
-            catch err
-                return callback(new errors.ParseError(err.message))
+            catch jsonParseError
+                return callback(new errors.ParseError(jsonParseError.message))
             message = jsonBody?.error ? err?.message
-            switch response.statusCode
-                when 500 then callback(new errors.ServerError(message))
-                when 404 then callback(new errors.NotFoundError(message))
-                when 403, 400
-                    ErrorClass = MESSAGE_TO_ERROR_MAP[message] ? errors.APIError
-                    callback(new ErrorClass(message))
-                when 200 then callback(null, jsonBody)
-                else callback(new errors.APIError(message ? 'Unknown error'))
+            if response
+              switch response.statusCode
+                  when 500 then callback(new errors.ServerError(message))
+                  when 404 then callback(new errors.NotFoundError(message))
+                  when 403, 400
+                      ErrorClass = MESSAGE_TO_ERROR_MAP[message] ? errors.APIError
+                      callback(new ErrorClass(message))
+                  when 200 then callback(null, jsonBody)
+                  else callback(new errors.APIError(message ? 'Unknown error'))
+            else
+              callback(err)
 
 
     _getAccessToken: (code, callback) ->

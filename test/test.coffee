@@ -170,6 +170,14 @@ describe 'Clef API', ->
                 expect(err.type).to.equal('ParseError')
                 done()
 
+        it "handles an error in the request", (done) ->
+            requestStub.callsArgWith(1, new Error("Test error"), null, null)
+
+            clef.sendRequest url: 'a url', method: 'GET', (err, body) ->
+              expect(err).to.exist
+              expect(err.message).to.equal('Test error')
+              done()
+
     describe '#getLogoutInformation', ->
         clef = Clef.initialize({ appID: TEST_APP_ID, appSecret: TEST_APP_SECRET })
         it 'should return a clef id', (done) ->
